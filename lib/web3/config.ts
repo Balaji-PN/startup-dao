@@ -1,23 +1,27 @@
-import { http, createConfig } from 'wagmi';
-import { sepolia, hardhat } from 'wagmi/chains';
+import '@rainbow-me/rainbowkit/styles.css';
 
-// Use the hardhat chain in development, sepolia in production
-const defaultChain = process.env.NODE_ENV === 'production' ? sepolia : hardhat;
+import { getDefaultConfig } from '@rainbow-me/rainbowkit';
+import { hardhat, sepolia } from 'viem/chains';
+import { http } from 'viem';
+
+export const STARTUP_FUNDING_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x5FbDB2315678afecb367f032d93F642f64180aa3';
+
+// Use Hardhat local chain in development and Sepolia in production
+const chains = process.env.NODE_ENV === 'production' ? [sepolia] : [hardhat];
+
+export const wagmiConfig = getDefaultConfig({
+  appName: 'Startup DAO',
+  projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
+  chains,
+  transports: {
+    [hardhat.id]: http(),
+    [sepolia.id]: http(),
+  },
+});
 
 // Get environment variables
 const alchemyId = process.env.NEXT_PUBLIC_ALCHEMY_ID;
 const walletConnectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_ID;
-
-// Set up the wagmi config
-export const config = createConfig({
-  chains: [defaultChain],
-  transports: {
-    [defaultChain.id]: http(),
-  },
-});
-
-// Contract address from environment
-export const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '';
 
 // Define chain settings for the app
 export const chainConfig = {

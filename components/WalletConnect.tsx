@@ -19,12 +19,12 @@ export default function WalletConnect() {
   if (isConnected) {
     return (
       <div className="flex items-center gap-2">
-        <span className="text-sm truncate max-w-[150px]">
+        <span className="text-sm truncate max-w-[150px] text-primary">
           {address?.slice(0, 6)}...{address?.slice(-4)}
         </span>
         <button
           onClick={() => disconnect()}
-          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm transition"
+          className="bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm transition"
         >
           Disconnect
         </button>
@@ -35,7 +35,7 @@ export default function WalletConnect() {
   return (
     <button
       onClick={() => connect({ connector: injected() })}
-      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition"
+      className="btn-primary px-4 py-2 rounded-md transition"
     >
       Connect Wallet
     </button>

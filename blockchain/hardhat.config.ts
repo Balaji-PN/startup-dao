@@ -7,16 +7,27 @@ dotenv.config({ path: '../.env' });
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.20",
-    settings: {
-      optimizer: {
-        enabled: true,
-        runs: 200,
+    compilers: [
+      {
+        version: "0.8.20",
+        settings: {
+          optimizer: {
+            enabled: true,
+            runs: 200,
+          },
+        },
       },
-    },
+      {
+        version: "0.8.28",
+      }
+    ],
   },
   networks: {
     hardhat: {},
+    localhost: {
+      url: "http://127.0.0.1:8545",
+      chainId: 31337,
+    },
     sepolia: {
       url: process.env.SEPOLIA_URL || "",
       accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
@@ -26,9 +37,7 @@ const config: HardhatUserConfig = {
     sources: "./contracts",
     tests: "./test",
     cache: "./cache",
-    artifacts: "./artifacts",
-    // Output contract artifacts to a directory the Next.js app can access
-    root: "../",
+    artifacts: "./artifacts"
   },
 };
 

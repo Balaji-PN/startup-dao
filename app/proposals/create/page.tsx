@@ -4,11 +4,15 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import Navigation from '@/components/Navigation';
+import { useStartupFundingContract } from '@/lib/web3/useContract';
+import LoadingSpinner from '@/components/LoadingSpinner';
 
 export default function CreateProposal() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [txError, setTxError] = useState<string | null>(null);
+  const { createProposal, isLoading, error: contractError } = useStartupFundingContract();
   
   const [formData, setFormData] = useState({
     title: '',
@@ -35,27 +39,27 @@ export default function CreateProposal() {
     
     try {
       setIsSubmitting(true);
+      setTxError(null);
       
-      // In a real app, you would:
-      // 1. Connect to the smart contract
-      // 2. Call the createProposal function
-      // 3. Save proposal details to the database
+      // Format the proposal description to include startup name and other details
+      const fullDescription = `${formData.description}\n\nStartup: ${formData.startupName}\nWebsite: ${formData.website || 'N/A'}\nPitch Deck: ${formData.pitchDeck || 'N/A'}`;
       
-      console.log('Form submitted:', {
-        ...formData,
-        creatorAddress: address,
-        amountNeeded: parseFloat(formData.amountNeeded),
-        duration: parseInt(formData.duration),
-      });
+      // Call the smart contract to create a proposal
+      const txHash = await createProposal(
+        formData.title,
+        fullDescription,
+        formData.amountNeeded,
+        parseInt(formData.duration)
+      );
       
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Redirect to proposals page
-      router.push('/proposals');
-    } catch (error) {
-      console.error('Error submitting proposal:', error);
-      alert('Failed to submit proposal. Please try again.');
+      if (txHash) {
+        // Redirect to proposals page
+        router.push('/proposals');
+      } else {
+        setTxError('Transaction failed. Please try again.');
+      }
+    } catch (error: any) {
+      setTxError(error.message || 'Failed to submit proposal. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
@@ -63,12 +67,12 @@ export default function CreateProposal() {
 
   if (!isConnected) {
     return (
-      <main className="min-h-screen">
+      <main className="min-h-screen bg-app">
         <Navigation />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-          <div className="bg-white shadow rounded-lg p-6 text-center">
-            <h2 className="text-2xl font-bold mb-4">Connect Your Wallet</h2>
-            <p className="mb-4">You need to connect your wallet to create a proposal.</p>
+          <div className="bg-card rounded-lg p-6 text-center">
+            <h2 className="text-2xl font-bold mb-4 text-primary">Connect Your Wallet</h2>
+            <p className="mb-4 text-secondary">You need to connect your wallet to create a proposal.</p>
           </div>
         </div>
       </main>
@@ -76,18 +80,24 @@ export default function CreateProposal() {
   }
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-app">
       <Navigation />
       
       <div className="py-10">
         <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-6">Create Funding Proposal</h1>
+          <h1 className="text-3xl font-bold text-primary mb-6">Create Funding Proposal</h1>
           
-          <div className="bg-white shadow rounded-lg p-6">
+          <div className="bg-card rounded-lg p-6">
+            {(txError || contractError) && (
+              <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded">
+                {txError || contractError}
+              </div>
+            )}
+            
             <form onSubmit={handleSubmit}>
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-secondary">
                     Startup Name
                   </label>
                   <input
@@ -96,12 +106,12 @@ export default function CreateProposal() {
                     value={formData.startupName}
                     onChange={handleChange}
                     required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-color bg-background text-primary shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-secondary">
                     Proposal Title
                   </label>
                   <input
@@ -110,12 +120,12 @@ export default function CreateProposal() {
                     value={formData.title}
                     onChange={handleChange}
                     required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-color bg-background text-primary shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-secondary">
                     Description
                   </label>
                   <textarea
@@ -124,12 +134,12 @@ export default function CreateProposal() {
                     onChange={handleChange}
                     required
                     rows={4}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-color bg-background text-primary shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-secondary">
                     Funding Goal (ETH)
                   </label>
                   <input
@@ -140,19 +150,19 @@ export default function CreateProposal() {
                     required
                     min="0.1"
                     step="0.1"
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-color bg-background text-primary shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-secondary">
                     Funding Duration (Days)
                   </label>
                   <select
                     name="duration"
                     value={formData.duration}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-color bg-background text-primary shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   >
                     <option value="7">7 days</option>
                     <option value="14">14 days</option>
@@ -163,7 +173,7 @@ export default function CreateProposal() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-secondary">
                     Website URL (optional)
                   </label>
                   <input
@@ -171,12 +181,12 @@ export default function CreateProposal() {
                     name="website"
                     value={formData.website}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-color bg-background text-primary shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-secondary">
                     Pitch Deck URL (optional)
                   </label>
                   <input
@@ -184,26 +194,31 @@ export default function CreateProposal() {
                     name="pitchDeck"
                     value={formData.pitchDeck}
                     onChange={handleChange}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border-color bg-background text-primary shadow-sm focus:border-blue-500 focus:ring-blue-500"
                   />
                 </div>
                 
-                <div className="flex justify-end">
+                <div className="flex justify-end space-x-3 pt-4">
                   <button
                     type="button"
                     onClick={() => router.push('/proposals')}
-                    className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-md mr-4"
+                    className="btn-secondary px-4 py-2 rounded-md"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={isSubmitting}
-                    className={`bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md ${
-                      isSubmitting ? 'opacity-75 cursor-not-allowed' : ''
-                    }`}
+                    disabled={isSubmitting || isLoading}
+                    className="btn-primary px-4 py-2 rounded-md flex items-center"
                   >
-                    {isSubmitting ? 'Creating...' : 'Create Proposal'}
+                    {isSubmitting ? (
+                      <>
+                        <LoadingSpinner size="small" className="mr-2" />
+                        Submitting...
+                      </>
+                    ) : (
+                      'Create Proposal'
+                    )}
                   </button>
                 </div>
               </div>

@@ -1,13 +1,16 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import "./globals.css";
-import Web3Provider from "@/components/web3/Web3Provider";
-
-const inter = Inter({ subsets: ["latin"] });
+import type { Metadata, Viewport } from 'next';
+import '@/app/globals.css';
+import Providers from './providers';
 
 export const metadata: Metadata = {
-  title: "Startup DAO - Decentralized Fundraising",
-  description: "A decentralized platform for startup fundraising",
+  title: 'Startup DAO',
+  description: 'Decentralized funding for innovative startups',
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
@@ -16,11 +19,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
-      <body className={inter.className}>
-        <Web3Provider>
+    <html lang="en" suppressHydrationWarning>
+      <body>
+        <Providers>
           {children}
-        </Web3Provider>
+        </Providers>
       </body>
     </html>
   );

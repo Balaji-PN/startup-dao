@@ -1,50 +1,115 @@
-# Simplified DAO for Startup Fundraising - Development Plan
-=====================================================
+# Startup DAO
 
-### Phase 1: Project Setup (1-2 days)
-------------------------------------
+A decentralized platform for funding innovative startups using blockchain technology. Built with Next.js, TypeScript, and Solidity.
 
-1. **Initialize Next.js application**
-2. **Set up MongoDB and Prisma**
-3. **Configure basic project structure**
-4. **Install Web3 dependencies**
+![Startup DAO](./public/screenshot.png)
 
-### Phase 2: Smart Contract Development (3-5 days)
----------------------------------------------
+## Features
 
-1. **Set up Hardhat development environment**
-2. **Create basic crowdfunding contract**
-3. **Implement funding logic**
-4. **Test contract locally**
+- **Create Funding Proposals**: Startups can create detailed funding proposals with custom funding goals and deadlines.
+- **Fund Projects**: Investors can contribute ETH to promising startup projects.
+- **Smart Contract Security**: All funds are securely managed by smart contracts on the Ethereum blockchain.
+- **Responsive UI**: Beautiful UI that works across desktop and mobile devices.
+- **Dark/Light Mode**: Support for both dark and light themes.
+- **Web3 Integration**: Seamless wallet connection using RainbowKit.
 
-### Phase 3: Backend Development (2-3 days)
------------------------------------------
+## Tech Stack
 
-1. **Set up Prisma schema for proposals**
-2. **Create API endpoints for proposal CRUD**
-3. **Implement authentication system**
+- **Frontend**:
+  - Next.js
+  - TypeScript
+  - TailwindCSS
+  - Wagmi (Ethereum hooks)
+  - RainbowKit (Wallet connection)
 
-### Phase 4: Frontend Development (3-5 days)
---------------------------------------------
+- **Smart Contracts**:
+  - Solidity
+  - Hardhat
+  - Ethers.js
 
-1. **Build wallet connection component**
-2. **Create proposal listing/creation UI**
-3. **Implement funding interface**
-4. **Develop dashboard for funded startups**
+## Getting Started
 
-### Phase 5: Web3 Integration (2-3 days)
------------------------------------------
+### Prerequisites
 
-1. **Connect frontend to smart contract**
-2. **Test funding transactions**
-3. **Implement transaction status tracking**
+- Node.js 16+
+- npm or yarn
+- MetaMask or other Web3 wallet
 
-### Phase 6: Testing & Deployment (2-3 days)
----------------------------------------------
+### Installation
 
-1. **Deploy smart contract to testnet**
-2. **Test full application flow**
-3. **Fix bugs and optimize**
-4. **Deploy to production**
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/startup-dao.git
+   cd startup-dao
+   ```
 
-Let's start with Phase 1 - would you like me to help set up the initial project structure?
+2. Install dependencies:
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+   
+   Fill in the required values in `.env.local`.
+
+4. Compile and deploy the smart contracts:
+   ```bash
+   cd blockchain
+   npx hardhat compile
+   npx hardhat node
+   # In a new terminal
+   npx hardhat run scripts/deploy.js --network localhost
+   ```
+
+5. Start the development server:
+   ```bash
+   npm run dev
+   # or
+   yarn dev
+   ```
+
+6. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Smart Contract Development
+
+The smart contracts are located in the `blockchain/contracts` directory. The main contract is `StartupFunding.sol`.
+
+### Testing
+
+Run the tests with:
+
+```bash
+cd blockchain
+npx hardhat test
+```
+
+### Deployment
+
+Deploy to a local network:
+
+```bash
+npx hardhat run scripts/deploy.js --network localhost
+```
+
+Deploy to a test network (e.g., Sepolia):
+
+```bash
+npx hardhat run scripts/deploy.js --network sepolia
+```
+
+## Frontend Development
+
+The frontend is built with Next.js and is located in the `app` directory. The UI components are in the `components` directory.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
