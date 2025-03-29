@@ -1,11 +1,38 @@
 import { STARTUP_FUNDING_ADDRESS } from './config';
 import { parseEther } from 'viem';
 
-// Import the contract ABI
-import StartupFundingAbi from '../../blockchain/artifacts/contracts/StartupFunding.sol/StartupFunding.json';
+// Import the contract ABI - using the public directory for Vercel compatibility
+// This is in case the blockchain/artifacts directory is gitignored
+let STARTUP_FUNDING_ABI: any;
+
+try {
+  // Try importing from the original location first (for local development)
+  const abi = require('../../blockchain/artifacts/contracts/StartupFunding.sol/StartupFunding.json');
+  STARTUP_FUNDING_ABI = abi.abi;
+} catch (error) {
+  // Fallback to the public directory (for production build)
+  try {
+    const abi = require('../../public/contracts/StartupFunding.sol/StartupFunding.json');
+    STARTUP_FUNDING_ABI = abi.abi;
+  } catch (secondError) {
+    console.error('Failed to load contract ABI', secondError);
+    // Provide a minimal ABI as fallback (you should replace this with your actual ABI)
+    STARTUP_FUNDING_ABI = [
+      // Example ABI entries - replace with your actual functions
+      {
+        "inputs": [],
+        "name": "proposalCount",
+        "outputs": [{"type": "uint256", "name": ""}],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      // Add more functions as needed
+    ];
+  }
+}
 
 // Export the contract ABI
-export const STARTUP_FUNDING_ABI = StartupFundingAbi.abi;
+export { STARTUP_FUNDING_ABI };
 
 // Function to get the contract config for use with wagmi
 export function getStartupFundingContract() {
