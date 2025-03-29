@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGODB_URI")
+}
+
+model User {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  address     String     @unique // Ethereum wallet address
+  name        String?
+  email       String?    @unique
+  avatar      String?
+  bio         String?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+  proposals   Proposal[] @relation("CreatedProposals")
+  investments Funding[]
+}
+
+model Proposal {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  title         String
+  description   String
+  amountNeeded  Float      // Amount needed in ETH
+  creatorId     String     @db.ObjectId
+  creator       User       @relation("CreatedProposals", fields: [creatorId], references: [id])
+  status        String     @default("PENDING") // PENDING, ACTIVE, FUNDED, FAILED
+  startupName   String
+  pitchDeck     String?    // URL to pitch deck
+  website       String?
+  socials       Json?      // Social media links
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+  expiresAt     DateTime?  // Funding deadline
+  contractId    String?    // ID of deployed contract (if any)
+  fundings      Funding[]
+  totalFunded   Float      @default(0)
+}
+
+model Funding {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  amount      Float     // Amount in ETH
+  investorId  String    @db.ObjectId
+  investor    User      @relation(fields: [investorId], references: [id])
+  proposalId  String    @db.ObjectId
+  proposal    Proposal  @relation(fields: [proposalId], references: [id])
+  txHash      String    // Transaction hash on blockchain
+  createdAt   DateTime  @default(now())
+}
+
+model Transaction {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  txHash      String    @unique // Transaction hash on blockchain
+  type        String    // FUND, WITHDRAW, DEPLOY
+  status      String    // PENDING, CONFIRMED, FAILED
+  from        String    // From address
+  to          String    // To address
+  amount      Float?    // Amount in ETH
+  data        Json?     // Additional data
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}

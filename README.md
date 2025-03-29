@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Simplified DAO for Startup Fundraising - Development Plan
+=====================================================
 
-## Getting Started
+### Phase 1: Project Setup (1-2 days)
+------------------------------------
 
-First, run the development server:
+1. **Initialize Next.js application**
+2. **Set up MongoDB and Prisma**
+3. **Configure basic project structure**
+4. **Install Web3 dependencies**
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+### Phase 2: Smart Contract Development (3-5 days)
+---------------------------------------------
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+1. **Set up Hardhat development environment**
+2. **Create basic crowdfunding contract**
+3. **Implement funding logic**
+4. **Test contract locally**
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Phase 3: Backend Development (2-3 days)
+-----------------------------------------
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+1. **Set up Prisma schema for proposals**
+2. **Create API endpoints for proposal CRUD**
+3. **Implement authentication system**
 
-## Learn More
+### Phase 4: Frontend Development (3-5 days)
+--------------------------------------------
 
-To learn more about Next.js, take a look at the following resources:
+1. **Build wallet connection component**
+2. **Create proposal listing/creation UI**
+3. **Implement funding interface**
+4. **Develop dashboard for funded startups**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Phase 5: Web3 Integration (2-3 days)
+-----------------------------------------
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **Connect frontend to smart contract**
+2. **Test funding transactions**
+3. **Implement transaction status tracking**
 
-## Deploy on Vercel
+### Phase 6: Testing & Deployment (2-3 days)
+---------------------------------------------
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Deploy smart contract to testnet**
+2. **Test full application flow**
+3. **Fix bugs and optimize**
+4. **Deploy to production**
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Let's start with Phase 1 - would you like me to help set up the initial project structure?
