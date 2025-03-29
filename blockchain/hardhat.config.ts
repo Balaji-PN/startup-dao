@@ -5,6 +5,7 @@ import * as dotenv from "dotenv";
 // Load environment variables from parent directory's .env file
 dotenv.config({ path: '../.env' });
 
+console.log(process.env.PRIVATE_KEY);
 const config: HardhatUserConfig = {
   solidity: {
     compilers: [
@@ -30,7 +31,7 @@ const config: HardhatUserConfig = {
     },
     sepolia: {
       url: process.env.SEPOLIA_URL || "",
-      accounts: process.env.PRIVATE_KEY ? [process.env.PRIVATE_KEY] : [],
+      accounts: [process.env.PRIVATE_KEY || ""],
     }
   },
   paths: {

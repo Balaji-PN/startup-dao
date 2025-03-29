@@ -7,12 +7,15 @@ import { http } from 'viem';
 export const STARTUP_FUNDING_ADDRESS = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 
 // Use Hardhat local chain in development and Sepolia in production
-const chains = process.env.NODE_ENV === 'production' ? [sepolia] : [hardhat];
+// Ensure we have the required array format for RainbowKit
+const chains = process.env.NODE_ENV === 'production' 
+  ? [sepolia] 
+  : [hardhat];
 
 export const wagmiConfig = getDefaultConfig({
   appName: 'Startup DAO',
   projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'YOUR_PROJECT_ID',
-  chains,
+  chains: chains as any, // Type assertion to bypass the RainbowKit type restriction
   transports: {
     [hardhat.id]: http(),
     [sepolia.id]: http(),
