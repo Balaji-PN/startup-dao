@@ -1,0 +1,16 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+
+First of all isk anything about WEB3 so if i have to grab anything outside from this area like the Secret keys you have to mention where do i get it and how can i get it Don't forget those things.
+
+Secondly the current project structure is in the root we having the nextjs project which is the frontend and in the /blockchain folder we having the hardhat configured everything realted to the WEB3 i think so.
+
+For the styling use the tailwindcss and make the UI more appropriate
+
+- You can @ files here
+- You can use markdown but dont have to

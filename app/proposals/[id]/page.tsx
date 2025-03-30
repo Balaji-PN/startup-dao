@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useAccount } from 'wagmi';
 import Navigation from '@/components/Navigation';
@@ -16,65 +16,136 @@ export default function ProposalDetail() {
   const [fundingError, setFundingError] = useState<string | null>(null);
   const [proposal, setProposal] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const isLoadingRef = useRef(false);
   
   const { 
     contributeToProposal, 
     getProposal, 
     isLoading: contractLoading, 
-    error: contractError 
+    error: contractError,
+    chainId
   } = useStartupFundingContract();
+
+  // Memoize the loadProposal function to avoid recreating it on each render
+  const loadProposal = useCallback(async () => {
+    if (!id) {
+      console.log("[DEBUG] No ID found, skipping loadProposal");
+      return;
+    }
+    
+    // Prevent multiple concurrent calls
+    if (isLoadingRef.current) {
+      console.log("[DEBUG] Already loading proposal, skipping duplicate call");
+      return;
+    }
+    
+    // Check if we have recent data in cached state
+    const cacheKey = `proposal-detail-${id}`;
+    const cached = sessionStorage.getItem(cacheKey);
+    const now = Date.now();
+    
+    // Use cached data if it exists and is less than 30 seconds old
+    if (cached) {
+      try {
+        const { data, timestamp } = JSON.parse(cached);
+        if (now - timestamp < 30000) { // 30 seconds cache
+          console.log("[DEBUG] Using cached proposal data from sessionStorage");
+          if (data.deadline) {
+            data.deadline = new Date(data.deadline);
+          }
+          setProposal(data);
+          setIsLoading(false);
+          return;
+        }
+      } catch (e) {
+        console.error("[DEBUG] Error parsing cached proposal data:", e);
+      }
+    }
+    
+    console.log("[DEBUG] Starting to load proposal with ID:", id);
+    
+    try {
+      isLoadingRef.current = true;
+      setIsLoading(true);
+      console.log("[DEBUG] Calling getProposal with ID:", id.toString());
+      const proposalData = await getProposal(BigInt(id.toString()));
+      
+      if (proposalData) {
+        console.log("[DEBUG] Proposal data loaded successfully:", proposalData);
+        setProposal(proposalData);
+        
+        // Cache the data
+        const cacheData = {
+          data: {...proposalData, deadline: proposalData.deadline.toISOString()},
+          timestamp: now
+        };
+        sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      } else {
+        console.log("[DEBUG] No proposal data returned, using fallback data");
+        
+        // Check if we're looking at a sample proposal (ID 1-3)
+        const proposalId = parseInt(id.toString());
+        if (proposalId >= 1 && proposalId <= 3) {
+          const sampleData = {
+            creator: '0x1234567890abcdef1234567890abcdef12345678',
+            title: proposalId === 1 ? 'AI-Powered Healthcare Analytics' : 
+                  proposalId === 2 ? 'Decentralized Renewable Energy Platform' :
+                  'Smart Agriculture Solutions',
+            description: `Sample proposal description for demo purposes.\n\nStartup: ${proposalId === 1 ? 'HealthTech AI' : 
+                         proposalId === 2 ? 'EnergyChain' : 
+                         'AgriTech Solutions'}\nWebsite: https://example.com`,
+            fundingGoal: proposalId === 1 ? 15 : proposalId === 2 ? 10 : 8,
+            amountRaised: proposalId === 1 ? 8.5 : proposalId === 2 ? 10 : 2.3,
+            deadline: new Date(proposalId === 1 ? '2025-03-15' : proposalId === 2 ? '2025-02-01' : '2025-04-30'),
+            claimed: false,
+            active: true
+          };
+          setProposal(sampleData);
+          
+          // Cache sample data too
+          const cacheData = {
+            data: {...sampleData, deadline: sampleData.deadline.toISOString()},
+            timestamp: now
+          };
+          sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
+        } else {
+          // If not a sample proposal and no data, set proposal to null
+          setProposal(null);
+        }
+      }
+    } catch (error) {
+      console.error('[DEBUG] Error loading proposal:', error);
+      setProposal(null);
+    } finally {
+      console.log("[DEBUG] Finished loading proposal, setting isLoading to false");
+      setIsLoading(false);
+      isLoadingRef.current = false;
+    }
+  }, [id]);
 
   // Load proposal data
   useEffect(() => {
     console.log("[DEBUG] ProposalDetail useEffect for loading proposal triggered");
     
-    async function loadProposal() {
-      if (!id) {
-        console.log("[DEBUG] No ID found, skipping loadProposal");
-        return;
-      }
-      
-      console.log("[DEBUG] Starting to load proposal with ID:", id);
-      
-      try {
-        setIsLoading(true);
-        console.log("[DEBUG] Calling getProposal with ID:", id.toString());
-        const proposalData = await getProposal(BigInt(id.toString()));
-        
-        if (proposalData) {
-          console.log("[DEBUG] Proposal data loaded successfully:", proposalData);
-          setProposal(proposalData);
-        } else {
-          console.log("[DEBUG] No proposal data returned, using fallback data");
-          // If we can't get the data from the blockchain yet, use dummy data for demo
-          setProposal({
-            creator: '0x1234567890abcdef1234567890abcdef12345678',
-            title: 'AI-Powered Health Monitoring App',
-            description: 'Our platform uses AI to analyze health data and provide personalized insights.\n\nStartup: HealthTech AI\nWebsite: https://healthtechai.example.com\nPitch Deck: https://healthtechai.example.com/pitch',
-            fundingGoal: 10,
-            amountRaised: 6.5,
-            deadline: new Date('2025-04-15'),
-            claimed: false,
-            active: true
-          });
-        }
-      } catch (error) {
-        console.error('[DEBUG] Error loading proposal:', error);
-      } finally {
-        console.log("[DEBUG] Finished loading proposal, setting isLoading to false");
-        setIsLoading(false);
-      }
-    }
+    // Avoid multiple concurrent calls
+    let isActive = true;
     
-    loadProposal();
+    const fetchData = async () => {
+      if (isActive) {
+        await loadProposal();
+      }
+    };
+    
+    fetchData();
     
     return () => {
+      isActive = false;
       console.log("[DEBUG] ProposalDetail proposal loading effect cleanup");
     };
-  }, [id, getProposal]);
+  }, [id]); // Only depend on id, not loadProposal
 
   // Handle contribution form submission
-  const handleContribute = async (e: React.FormEvent) => {
+  const handleContribute = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!isConnected) {
@@ -82,12 +153,36 @@ export default function ProposalDetail() {
       return;
     }
     
-    if (!id || !contributionAmount || parseFloat(contributionAmount) <= 0) {
+    // Input validation
+    if (!id) {
+      setFundingError('Invalid proposal ID');
+      return;
+    }
+    
+    if (!contributionAmount) {
+      setFundingError('Please enter a contribution amount');
+      return;
+    }
+    
+    const amount = parseFloat(contributionAmount);
+    if (isNaN(amount) || amount <= 0) {
       setFundingError('Please enter a valid contribution amount');
       return;
     }
     
+    // Proposal validation
+    if (!proposal || !proposal.active) {
+      setFundingError('This proposal is not active');
+      return;
+    }
+    
+    if (new Date() > proposal.deadline) {
+      setFundingError('This proposal has expired');
+      return;
+    }
+    
     try {
+      console.log("[DEBUG] Starting contribution process with amount:", contributionAmount);
       setIsFunding(true);
       setFundingError(null);
       
@@ -96,27 +191,54 @@ export default function ProposalDetail() {
         contributionAmount
       );
       
+      console.log("[DEBUG] Contribution transaction result:", txHash);
+      
       if (txHash) {
-        console.log('Transaction hash:', txHash);
+        console.log('[DEBUG] Transaction successful:', txHash);
         setContributionAmount('');
         
-        // Update the proposal data (in a real app, this would be more robust)
+        // Update the proposal data optimistically
         if (proposal) {
-          setProposal({
+          console.log('[DEBUG] Updating proposal with new contribution amount');
+          const updatedProposal = {
             ...proposal,
-            amountRaised: proposal.amountRaised + parseFloat(contributionAmount)
-          });
+            amountRaised: proposal.amountRaised + amount
+          };
+          setProposal(updatedProposal);
+          
+          // Update the cache with the new data
+          const cacheKey = `proposal-detail-${id}`;
+          const cacheData = {
+            data: {
+              ...updatedProposal,
+              deadline: updatedProposal.deadline.toISOString()
+            },
+            timestamp: Date.now()
+          };
+          sessionStorage.setItem(cacheKey, JSON.stringify(cacheData));
         }
+        
+        // Clear proposal cache after 15 seconds to ensure a fresh reload on next visit
+        setTimeout(() => {
+          console.log('[DEBUG] Clearing proposal cache to ensure fresh data on next load');
+          const cacheKey = `proposal-detail-${id}`;
+          sessionStorage.removeItem(cacheKey);
+          
+          // Also clear proposal from contracts cache
+          const contractCacheKey = `proposal-${chainId}-${id}`;
+          sessionStorage.removeItem(contractCacheKey);
+        }, 15000);
       } else {
-        setFundingError('Transaction failed. Please check the console for details.');
+        console.error('[DEBUG] Transaction failed, no hash returned');
+        setFundingError(contractError || 'Transaction failed. Please try again.');
       }
     } catch (error: any) {
-      console.error('Error contributing to proposal:', error);
+      console.error('[DEBUG] Error contributing to proposal:', error);
       setFundingError(error.message || 'Failed to contribute. Please try again.');
     } finally {
       setIsFunding(false);
     }
-  };
+  }, [id, proposal, contributionAmount, isConnected, contributeToProposal, contractError, chainId]);
 
   if (isLoading) {
     return (

@@ -12,6 +12,7 @@ export default function CreateProposal() {
   const { address, isConnected } = useAccount();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [txError, setTxError] = useState<string | null>(null);
+  const [txSuccess, setTxSuccess] = useState<string | null>(null);
   const { createProposal, isLoading, error: contractError } = useStartupFundingContract();
   
   const [formData, setFormData] = useState({
@@ -37,12 +38,36 @@ export default function CreateProposal() {
       return;
     }
     
+    // Validate inputs
+    if (!formData.title || !formData.description || !formData.startupName || !formData.amountNeeded) {
+      setTxError('Please fill in all required fields');
+      return;
+    }
+    
+    // Validate funding amount
+    const amount = parseFloat(formData.amountNeeded);
+    if (isNaN(amount) || amount <= 0) {
+      setTxError('Please enter a valid funding amount');
+      return;
+    }
+    
     try {
       setIsSubmitting(true);
       setTxError(null);
+      setTxSuccess(null);
+      
+      console.log("[DEBUG] Starting proposal creation with data:", formData);
       
       // Format the proposal description to include startup name and other details
       const fullDescription = `${formData.description}\n\nStartup: ${formData.startupName}\nWebsite: ${formData.website || 'N/A'}\nPitch Deck: ${formData.pitchDeck || 'N/A'}`;
+      
+      console.log("[DEBUG] Formatted description:", fullDescription);
+      console.log("[DEBUG] Calling createProposal with:", {
+        title: formData.title,
+        description: fullDescription,
+        amount: formData.amountNeeded,
+        duration: parseInt(formData.duration)
+      });
       
       // Call the smart contract to create a proposal
       const txHash = await createProposal(
@@ -52,14 +77,34 @@ export default function CreateProposal() {
         parseInt(formData.duration)
       );
       
+      console.log("[DEBUG] Transaction result:", txHash);
+      
       if (txHash) {
-        // Redirect to proposals page
-        router.push('/proposals');
+        console.log("[DEBUG] Proposal created successfully with tx hash:", txHash);
+        
+        // Show success message
+        setTxSuccess(`Proposal successfully created with transaction hash: ${txHash}. You will be redirected to the proposals list in a moment.`);
+        
+        // Wait a bit longer to ensure the transaction is processed
+        setTimeout(() => {
+          // Redirect to proposals page
+          router.push('/proposals');
+        }, 5000);
       } else {
-        setTxError('Transaction failed. Please try again.');
+        console.error("[DEBUG] Transaction failed, no hash returned");
+        setTxError(contractError || 'Transaction failed. Please check the console for details and make sure your MetaMask is properly connected.');
       }
     } catch (error: any) {
-      setTxError(error.message || 'Failed to submit proposal. Please try again.');
+      console.error("[DEBUG] Error creating proposal:", error);
+      
+      // Check if the user rejected the transaction
+      if (error.message && error.message.includes('user rejected transaction')) {
+        setTxError('Transaction was rejected in MetaMask. Please confirm the transaction to proceed.');
+      } else if (error.message && error.message.includes('insufficient funds')) {
+        setTxError('Your wallet has insufficient funds to complete this transaction.');
+      } else {
+        setTxError(error.message || 'Failed to submit proposal. Please try again.');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -88,9 +133,15 @@ export default function CreateProposal() {
           <h1 className="text-3xl font-bold text-primary mb-6">Create Funding Proposal</h1>
           
           <div className="bg-card rounded-lg p-6">
-            {(txError || contractError) && (
+            {txError && (
               <div className="mb-4 p-3 bg-red-100 dark:bg-red-900/30 border border-red-400 dark:border-red-800 text-red-700 dark:text-red-300 rounded">
-                {txError || contractError}
+                {txError}
+              </div>
+            )}
+
+            {txSuccess && (
+              <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/30 border border-green-400 dark:border-green-800 text-green-700 dark:text-green-300 rounded">
+                {txSuccess}
               </div>
             )}
             
@@ -209,16 +260,16 @@ export default function CreateProposal() {
                   <button
                     type="submit"
                     disabled={isSubmitting || isLoading}
-                    className="btn-primary px-4 py-2 rounded-md flex items-center"
+                    className={`btn-primary px-6 py-2 rounded-md ${
+                      (isSubmitting || isLoading) ? 'opacity-75 cursor-not-allowed' : ''
+                    }`}
                   >
-                    {isSubmitting ? (
+                    {isSubmitting || isLoading ? (
                       <>
-                        <LoadingSpinner size="small" className="mr-2" />
-                        Submitting...
+                        <LoadingSpinner size="small" color="white" className="inline mr-2" />
+                        {isSubmitting ? 'Creating Proposal...' : 'Processing...'}
                       </>
-                    ) : (
-                      'Create Proposal'
-                    )}
+                    ) : 'Create Proposal'}
                   </button>
                 </div>
               </div>
